@@ -26,5 +26,7 @@ module TimelogHelper
 		end
 	end
 
-
+	def estimated_hours(hours_for_value, columns)
+		00
+	end
 end
