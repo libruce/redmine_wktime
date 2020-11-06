@@ -26,7 +26,18 @@ module TimelogHelper
 		end
 	end
 
-	def estimated_hours(hours_for_value, columns)
-		00
+	def estimated_hours(filters, criteria)
+		query = Issue.reorder(nil).all
+		filters.each do |filter|
+			case filter.first
+			when "project"
+				query = query.joins(:project).where("projects.id = #{filter.last}")
+			when "issue"
+				query = query.where("issues.id = #{filter.last}")
+			# else
+				
+			end
+		end
+		query.sum(:estimated_hours)
 	end
 end
