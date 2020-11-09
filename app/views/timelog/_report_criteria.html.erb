@@ -16,7 +16,9 @@
         <td class="hours"><%= currency %><%= html_hours(format_hours(sum)) if sum > 0 %></td>
       <% end -%>
       <td class="hours"><%= currency %><%= html_hours(format_hours(total)) if total > 0 %></td>
-      <td class="hours"><%= estimated_hours(filters, criterias[level]) %></td>
+      <% if @showEstimate%>
+        <td class="hours"><%= estimated_hours(filters, criterias[level]) %></td>
+      <% end %>
   </tr>
   <% if criterias.length > level+1 -%>
     <%= render(:partial => 'report_criteria', :locals => {:criterias => criterias, :hours => hours_for_value, :level => (level + 1), filters: filters}) %>

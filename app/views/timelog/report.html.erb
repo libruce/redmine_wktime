@@ -39,6 +39,7 @@
 <table class="list" id="time-report">
 <thead>
 <tr>
+<% @showEstimate = params[:spent_type] == "T" ? true : false%>
 <% @report.criteria.each do |criteria| %>
   <th><%= l_or_humanize(@report.available_criteria[criteria][:label]) %></th>
 <% end %>
@@ -48,11 +49,13 @@
 <% end %>
 	<% expense = (@query.type == "WkExpenseEntryQuery" ? l(:label_total_expense) : l(:label_total_time)) %>
   <th class="total" style="width:<%= columns_width %>%;"><%= expense %></th>
-  <th class="total" style="width:<%= columns_width %>%;"><%= l(:field_estimated_hours) %></th>
+  <% if @showEstimate %>
+    <th class="total" style="width:<%= columns_width %>%;"><%= l(:field_estimated_hours) %></th>
+  <% end %>
 </tr>
 </thead>
 <tbody>
-<%= render :partial => 'report_criteria', :locals => {:criterias => @report.criteria, :hours => @report.hours, :level => 0} %>
+<%= render :partial => 'report_criteria', :locals => {:criterias => @report.criteria, :hours => @report.hours, :level => 0 } %>
   <% currency = (@query.type == "WkExpenseEntryQuery" ? Setting.plugin_redmine_wktime['wktime_currency'] : "") %> 
   <tr class="total">
   <td><%= expense %></td>
@@ -63,7 +66,9 @@
     <td class="hours"><%= currency %><%= html_hours(format_hours(sum)) if sum > 0 %></td>
   <% end -%>
   <td class="hours"><%= currency %><%= html_hours(format_hours(total)) if total > 0 %></td>
-  <td class="hours"><%= estimated_total_hours(@parentFilter) %></td>
+  <% if @showEstimate %>
+    <td class="hours"><%= estimated_total_hours(@parentFilter) %></td>
+  <% end %>
   </tr>
 </tbody>
 </table>
