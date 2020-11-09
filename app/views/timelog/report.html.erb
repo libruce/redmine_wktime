@@ -63,7 +63,7 @@
     <td class="hours"><%= currency %><%= html_hours(format_hours(sum)) if sum > 0 %></td>
   <% end -%>
   <td class="hours"><%= currency %><%= html_hours(format_hours(total)) if total > 0 %></td>
-  <td class="hours"><%= 00 %></td>
+  <td class="hours"><%= estimated_total_hours(@parentFilter) %></td>
   </tr>
 </tbody>
 </table>

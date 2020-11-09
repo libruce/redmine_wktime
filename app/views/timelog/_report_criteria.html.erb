@@ -1,7 +1,8 @@
 <% @report.hours.collect {|h| h[criterias[level]].to_s}.uniq.each do |value| %>
   <% filters ||= {} %>
   <% filters[criterias[level]] = value %>
-  <%= filters %>||
+  <% @parentFilter ||= { criteria: criterias[level], values: []} %>
+  <% @parentFilter[:values] << value if level == 0 %>
   <% hours_for_value = select_hours(hours, criterias[level], value) -%>
   <% next if hours_for_value.empty? -%>
   <tr class="<%= criterias.length > level+1 ? 'subtotal' : 'last-level' %>">
