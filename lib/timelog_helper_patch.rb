@@ -27,22 +27,22 @@ module TimelogHelper
 	end
 
 	def estimated_hours(filters, criteria)
-		if ["project", "issue", "category", "status", "version", "tracker", "total"].include? criteria
+		if ["project", "issue", "category", "status", "version", "tracker", "total"].include?(criteria)
 			query = Issue.reorder(nil).all
 			filters.each do |filter|
 				case filter.first
 				when "project"
-					query = query.where("project_id IN (#{filter.last})")
+					query = get_clause(query, filter.last, "project_id")
 				when "issue"
-					query = query.where("issues.id IN (#{filter.last})")
+					query = get_clause(query, filter.last, "id")
 				when "status"
-					query = query.where("status_id IN (#{filter.last})")
+					query = get_clause(query, filter.last, "status_id")
 				when "version"
-					query = query.where("fixed_version_id " + (filter.last.present? ? "IN (#{filter.last})" : "IS NULL"))
+					query = get_clause(query, filter.last, "fixed_version_id")
 				when "tracker"
-					query = query.where("tracker_id IN (#{filter.last})")
+					query = get_clause(query, filter.last, "tracker_id")
 				when "category"
-					query = query.where("category_id " + (filter.last.present? ? "IN (#{filter.last})" : "IS NULL"))
+					query = get_clause(query, filter.last, "category_id")
 				end
 			end
 			sum = query.sum(:estimated_hours)
@@ -52,5 +52,10 @@ module TimelogHelper
 
 	def estimated_total_hours(filter)
 		estimated_hours({ filter[:criteria] => filter[:values].join(",") }, "total")
+	end
+
+	def get_clause(query, filter, column)
+		condition = filter.present? ? ((filter.split(",")).include?("null") ? "#{column} IN (#{filter}) OR #{column} IS NULL" : "#{column} IN (#{filter})") : "#{column} IS NULL"
+		query = query.where(condition)
 	end
 end

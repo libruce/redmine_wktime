@@ -2,7 +2,7 @@
   <% filters ||= {} %>
   <% filters[criterias[level]] = value %>
   <% @parentFilter ||= { criteria: criterias[level], values: []} %>
-  <% @parentFilter[:values] << value if level == 0 && value.present? %>
+  <% @parentFilter[:values] << (value.present? ? value : "null") if level == 0 %>
   <% hours_for_value = select_hours(hours, criterias[level], value) -%>
   <% next if hours_for_value.empty? -%>
   <tr class="<%= criterias.length > level+1 ? 'subtotal' : 'last-level' %>">
