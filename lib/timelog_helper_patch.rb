@@ -27,7 +27,7 @@ module TimelogHelper
 	end
 
 	def estimated_hours(filters, criteria)
-		if ["project", "issue", "category", "status", "version", "tracker", "total"].include?(criteria)
+		if ["project", "issue", "category", "status", "version", "tracker", "user"].include?(criteria)
 			query = Issue.reorder(nil).all
 			filters.each do |filter|
 				case filter.first
@@ -43,6 +43,8 @@ module TimelogHelper
 					query = get_clause(query, filter.last, "tracker_id")
 				when "category"
 					query = get_clause(query, filter.last, "category_id")
+				when "user"
+					query = get_clause(query, filter.last, "assigned_to_id")
 				end
 			end
 			sum = query.sum(:estimated_hours)
