@@ -32,19 +32,19 @@ module TimelogHelper
 			filters.each do |filter|
 				case filter.first
 				when "project"
-					query = get_clause(query, filter.last, "project_id")
+					query = get_clause(query, filter.last, "issues.project_id")
 				when "issue"
-					query = get_clause(query, filter.last, "id")
+					query = get_clause(query, filter.last, "issues.id")
 				when "status"
-					query = get_clause(query, filter.last, "status_id")
+					query = get_clause(query, filter.last, "issues.status_id")
 				when "version"
-					query = get_clause(query, filter.last, "fixed_version_id")
+					query = get_clause(query, filter.last, "issues.fixed_version_id")
 				when "tracker"
-					query = get_clause(query, filter.last, "tracker_id")
+					query = get_clause(query, filter.last, "issues.tracker_id")
 				when "category"
-					query = get_clause(query, filter.last, "category_id")
+					query = get_clause(query, filter.last, "issues.category_id")
 				when "user"
-					query = get_clause(query, filter.last, "assigned_to_id")
+					query = query.includes(:assignees).where("issues.assigned_to_id IN (#{filter.last}) OR wk_issue_assignees.user_id IN (#{filter.last})")
 				end
 			end
 			sum = query.sum(:estimated_hours)
