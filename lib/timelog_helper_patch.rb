@@ -51,11 +51,64 @@ module TimelogHelper
 	end
 
 	def estimated_total_hours(filter)
-		estimated_hours({ filter[:criteria] => filter[:values].join(",") }, "total")
+		estimated_hours({ filter[:criteria] => filter[:values].join(",") }, filter[:criteria])
 	end
 
 	def get_clause(query, filter, column)
 		condition = filter.present? ? ((filter.split(",")).include?("null") ? "#{column} IN (#{filter}) OR #{column} IS NULL" : "#{column} IN (#{filter})") : "#{column} IS NULL"
 		query = query.where(condition)
 	end
+
+  def report_to_csv(report)
+    Redmine::Export::CSV.generate do |csv|
+      # Column headers
+      @showEstimate = session[:timelog][:spent_type] == "T" ? true : false
+      headers = report.criteria.collect {|criteria| l(report.available_criteria[criteria][:label]) }
+      headers += report.periods
+      headers << l(:label_total_time)
+      headers << l(:field_estimated_hours) if @showEstimate
+      csv << headers
+      # Content
+      report_criteria_to_csv(csv, report.available_criteria, report.columns, report.criteria, report.periods, report.hours)
+      # Total row
+      str_total = l(:label_total_time)
+      row = [ str_total ] + [''] * (report.criteria.size - 1)
+      total = 0
+      report.periods.each do |period|
+        sum = sum_hours(select_hours(report.hours, report.columns, period.to_s))
+        total += sum
+        row << (sum > 0 ? sum : '')
+      end
+			row << total
+			row << estimated_total_hours(@parentFilter) if @showEstimate
+      csv << row
+    end
+  end
+
+  def report_criteria_to_csv(csv, available_criteria, columns, criteria, periods, hours, level=0, filters = {})
+    hours.collect {|h| h[criteria[level]].to_s}.uniq.each do |value|
+			hours_for_value = select_hours(hours, criteria[level], value)
+			filters.each{|key, value| filters.except!(value) if level < key.to_i}
+			filters[criteria[level]] = value
+			filters[level] = criteria[level]
+			@parentFilter ||= { criteria: criteria[level], values: []}
+			@parentFilter[:values] << (value.present? ? value : "null") if level == 0
+      next if hours_for_value.empty?
+      row = [''] * level
+      row << format_criteria_value(available_criteria[criteria[level]], value).to_s
+      row += [''] * (criteria.length - level - 1)
+			total = 0
+      periods.each do |period|
+        sum = sum_hours(select_hours(hours_for_value, columns, period.to_s))
+        total += sum
+        row << (sum > 0 ? sum : '')
+      end
+      row << total
+			row << estimated_hours(filters, criteria[level]) if @showEstimate
+      csv << row
+      if criteria.length > level + 1
+        report_criteria_to_csv(csv, available_criteria, columns, criteria, periods, hours_for_value, level + 1, filters)
+      end
+    end
+  end
 end
