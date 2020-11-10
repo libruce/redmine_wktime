@@ -29,6 +29,7 @@ module TimelogHelper
 	def estimated_hours(filters, criteria)
 		if ["project", "issue", "category", "status", "version", "tracker", "user"].include?(criteria)
 			query = Issue.reorder(nil).all
+			query = query.where("project_id = ?", @project.id) if @project.present?
 			filters.each do |filter|
 				case filter.first
 				when "project"
