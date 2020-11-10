@@ -50,7 +50,7 @@
 	<% expense = (@query.type == "WkExpenseEntryQuery" ? l(:label_total_expense) : l(:label_total_time)) %>
   <th class="total" style="width:<%= columns_width %>%;"><%= expense %></th>
   <% if @showEstimate %>
-    <th class="total" style="width:<%= columns_width %>%;"><%= l(:field_estimated_hours) %></th>
+    <th class="total" style="width:<%= columns_width %>%;"><%= l(:field_total_estimated_hours) %></th>
   <% end %>
 </tr>
 </thead>
