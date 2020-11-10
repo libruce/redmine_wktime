@@ -67,7 +67,7 @@ module TimelogHelper
       headers = report.criteria.collect {|criteria| l(report.available_criteria[criteria][:label]) }
       headers += report.periods
       headers << l(:label_total_time)
-      headers << l(:field_estimated_hours) if @showEstimate
+      headers << l(:field_total_estimated_hours) if @showEstimate
       csv << headers
       # Content
       report_criteria_to_csv(csv, report.available_criteria, report.columns, report.criteria, report.periods, report.hours)
