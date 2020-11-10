@@ -81,7 +81,7 @@ module TimelogHelper
         row << (sum > 0 ? sum : '')
       end
 			row << total
-			row << estimated_total_hours(@parentFilter) if @showEstimate
+			row << @estimatedTotal if @showEstimate
       csv << row
     end
   end
@@ -92,8 +92,6 @@ module TimelogHelper
 			filters.each{|key, value| filters.except!(value) if level < key.to_i}
 			filters[criteria[level]] = value
 			filters[level] = criteria[level]
-			@parentFilter ||= { criteria: criteria[level], values: []}
-			@parentFilter[:values] << (value.present? ? value : "null") if level == 0
       next if hours_for_value.empty?
       row = [''] * level
       row << format_criteria_value(available_criteria[criteria[level]], value).to_s
@@ -104,8 +102,11 @@ module TimelogHelper
         total += sum
         row << (sum > 0 ? sum : '')
       end
-      row << total
-			row << estimated_hours(filters, criteria[level]) if @showEstimate
+			row << total			
+			estimatedHours = estimated_hours(filters, criteria[level])
+			@estimatedTotal ||= 0
+			@estimatedTotal += estimatedHours if level == 0
+			row << estimatedHours if @showEstimate
       csv << row
       if criteria.length > level + 1
         report_criteria_to_csv(csv, available_criteria, columns, criteria, periods, hours_for_value, level + 1, filters)
