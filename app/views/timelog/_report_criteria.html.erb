@@ -19,7 +19,10 @@
       <% end -%>
       <td class="hours"><%= currency %><%= html_hours(format_hours(total)) if total > 0 %></td>
       <% if @showEstimate%>
-        <td class="hours"><%= html_hours(format_hours(estimated_hours(filters, criterias[level]))) %></td>
+        <% estimatedHours = estimated_hours(filters, criterias[level]) %>
+        <% @estimatedTotal ||= 0 %>
+        <% @estimatedTotal += estimatedHours if level == 0 %>
+        <td class="hours"><%= html_hours(format_hours(estimatedHours)) %></td>
       <% end %>
   </tr>
   <% if criterias.length > level+1 -%>

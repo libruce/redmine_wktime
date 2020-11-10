@@ -44,16 +44,14 @@ module TimelogHelper
 				when "category"
 					query = get_clause(query, filter.last, "issues.category_id")
 				when "user"
-					query = query.includes(:assignees).where("issues.assigned_to_id IN (#{filter.last}) OR wk_issue_assignees.user_id IN (#{filter.last})")
+					query = query.joins("LEFT JOIN (SELECT issue_id, user_id FROM wk_issue_assignees WHERE user_id IN (#{filter.last})) AS AA ON AA.issue_id = issues.id")
+          .where("issues.assigned_to_id IN (#{filter.last}) OR AA.user_id IS NOT NULL")
+          .select("issues.id, issues.assigned_to_id, issues.estimated_hours")
 				end
 			end
 			sum = query.sum(:estimated_hours)
 		end
 		sum || 0
-	end
-
-	def estimated_total_hours(filter)
-		estimated_hours({ filter[:criteria] => filter[:values].join(",") }, filter[:criteria])
 	end
 
 	def get_clause(query, filter, column)
