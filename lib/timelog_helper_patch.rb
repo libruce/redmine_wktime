@@ -27,8 +27,8 @@ module TimelogHelper
 	end
 
 	def estimated_hours(filters, criteria)
-		customFieldType = criteria.include?("cf_") ? CustomField.find(criteria.split('_').last).type : ""
-		if ["project", "issue", "category", "status", "version", "tracker", "user"].include?(criteria) || customFieldType == "IssueCustomField"
+		customField = criteria.include?("cf_") ? CustomField.find(criteria.split('_').last) : ""
+		if ["project", "issue", "category", "status", "version", "tracker", "user"].include?(criteria) || customField.type == "IssueCustomField"
 			query = Issue.reorder(nil)
 			query = query.where("project_id = ?", @project.id) if @project.present?
 			filters.each do |filter|
@@ -49,7 +49,7 @@ module TimelogHelper
 					query = get_clause(query, filter.last, "issues.assigned_to_id")
 				when "cf"
 					if filter.last.present?
-						query = query.joins(:custom_values).where({ "custom_values.customized_type": "Issue", "custom_values.custom_field_id": filter.last }).where.not("custom_values.value": "" )
+						query = query.joins(:custom_values).where({ "custom_values.customized_type": "Issue", "custom_values.custom_field_id": customField.id, "custom_values.value": filter.last })
 					else
 						query = query.joins("LEFT JOIN (
 							SELECT customized_id AS id FROM custom_values
@@ -101,7 +101,7 @@ module TimelogHelper
 			filters.each{|key, value| filters.except!(value) if level < key.to_i}
 			criteriaLevel = criteria[level].include?("cf_") ? "cf" : criteria[level]
 			filters[level] = criteriaLevel
-			filters[criteriaLevel] = criteria[level].include?("cf_") ? (value.present? ? criteria[level].split('_').last : '' ) : value
+			filters[criteriaLevel] = value
       next if hours_for_value.empty?
       row = [''] * level
       row << format_criteria_value(available_criteria[criteria[level]], value).to_s
