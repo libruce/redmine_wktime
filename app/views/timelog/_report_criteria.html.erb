@@ -1,8 +1,9 @@
 <% @report.hours.collect {|h| h[criterias[level]].to_s}.uniq.each do |value| %>
   <% filters ||= {} %>
   <% filters.each{|key, value| filters.except!(value) if level < key.to_i } %>
-  <% filters[level] = criterias[level] %>
-  <% filters[criterias[level]] = value %>
+  <% criteria = criterias[level].include?("cf_") ? "cf" : criterias[level]%>
+  <% filters[level] = criteria %>
+  <% filters[criteria] = value %>
   <% hours_for_value = select_hours(hours, criterias[level], value) -%>
   <% next if hours_for_value.empty? -%>
   <tr class="<%= criterias.length > level+1 ? 'subtotal' : 'last-level' %>">
@@ -17,7 +18,7 @@
       <% end -%>
       <td class="hours"><%= currency %><%= html_hours(format_hours(total)) if total > 0 %></td>
       <% if @showEstimate%>
-        <% estimatedHours = estimated_hours(filters, criterias[level]) %>
+        <% estimatedHours = estimated_hours(filters, criteria) %>
         <% @estimatedTotal ||= 0 %>
         <% @estimatedTotal += estimatedHours if level == 0 %>
         <td class="hours"><%= html_hours(format_hours(estimatedHours)) %></td>

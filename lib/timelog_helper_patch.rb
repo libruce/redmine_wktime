@@ -27,7 +27,7 @@ module TimelogHelper
 	end
 
 	def estimated_hours(filters, criteria)
-		if ["project", "issue", "category", "status", "version", "tracker", "user"].include?(criteria)
+		if ["project", "issue", "category", "status", "version", "tracker", "user", "cf"].include?(criteria)
 			query = Issue.reorder(nil).all
 			query = query.where("project_id = ?", @project.id) if @project.present?
 			filters.each do |filter|
@@ -48,6 +48,12 @@ module TimelogHelper
 					query = query.joins("LEFT JOIN (SELECT issue_id, user_id FROM wk_issue_assignees WHERE user_id IN (#{filter.last})) AS AA ON AA.issue_id = issues.id")
           .where("issues.assigned_to_id IN (#{filter.last}) OR AA.user_id IS NOT NULL")
           .select("issues.id, issues.assigned_to_id, issues.estimated_hours")
+				when "cf"
+					if filter.last.present?
+						query = query.joins(:custom_values).where({ "custom_values.customized_type": "Issue", "custom_values.custom_field_id": filter.last })
+					else
+						query = query.joins("LEFT JOIN custom_values ON custom_values.customized_id = issues.id AND custom_values.customized_type = 'Issue'").where({ "custom_values.custom_field_id": nil })
+					end
 				end
 			end
 			sum = query.sum(:estimated_hours)
