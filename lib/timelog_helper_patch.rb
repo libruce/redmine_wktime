@@ -103,7 +103,7 @@ module TimelogHelper
 			filters.each{|key, value| filters.except!(value) if level < key.to_i}
 			criteriaLevel = criteria[level].include?("cf_") ? "cf" : criteria[level]
 			filters[level] = criteriaLevel
-			filters[criteriaLevel] = value
+			filters[criteriaLevel] = criteria[level].include?("cf_") ? [ criteria[level].split('_').last, value ] : value
       next if hours_for_value.empty?
       row = [''] * level
       row << format_criteria_value(available_criteria[criteria[level]], value).to_s
