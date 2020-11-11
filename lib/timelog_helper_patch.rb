@@ -27,8 +27,8 @@ module TimelogHelper
 	end
 
 	def estimated_hours(filters, criteria)
-		customField = criteria.include?("cf_") ? CustomField.find(criteria.split('_').last) : ""
-		if ["project", "issue", "category", "status", "version", "tracker", "user"].include?(criteria) || customField.type == "IssueCustomField"
+		customField = criteria.include?("cf_") ? CustomField.find(criteria.split('_').last) : nil
+		if ["project", "issue", "category", "status", "version", "tracker", "user"].include?(criteria) || customField && customField.type == "IssueCustomField"
 			query = Issue.reorder(nil)
 			query = query.where("project_id = ?", @project.id) if @project.present?
 			filters.each do |filter|
@@ -48,7 +48,7 @@ module TimelogHelper
 				when "user"
 					query = get_clause(query, filter.last, "issues.assigned_to_id")
 				when "cf"
-					if filter.last.present?
+					if filter.last.present? && customField
 						query = query.joins(:custom_values).where({ "custom_values.customized_type": "Issue", "custom_values.custom_field_id": customField.id, "custom_values.value": filter.last })
 					else
 						query = query.joins("LEFT JOIN (
