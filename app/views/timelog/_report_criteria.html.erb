@@ -3,7 +3,7 @@
   <% filters.each{|key, value| filters.except!(value) if level < key.to_i } %>
   <% criteria = criterias[level].include?("cf_") ? "cf" : criterias[level]%>
   <% filters[level] = criteria %>
-  <% filters[criteria] = value %>
+  <% filters[criteria] = criterias[level].include?("cf_") ? [ criterias[level].split('_').last, value ] : value %>
   <% hours_for_value = select_hours(hours, criterias[level], value) -%>
   <% next if hours_for_value.empty? -%>
   <tr class="<%= criterias.length > level+1 ? 'subtotal' : 'last-level' %>">

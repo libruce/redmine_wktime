@@ -27,29 +27,31 @@ module TimelogHelper
 	end
 
 	def estimated_hours(filters, criteria)
-		customField = criteria.include?("cf_") ? CustomField.find(criteria.split('_').last) : nil
+		cf_id = nil
+		filters.each{|k, v| cf_id = v.first if k == "cf" }
+		customField = criteria.include?("cf_") || cf_id.present? ? CustomField.find(cf_id || criteria.split('_').last) : nil
 		if ["project", "issue", "category", "status", "version", "tracker", "user"].include?(criteria) || customField && customField.type == "IssueCustomField"
 			query = Issue.reorder(nil)
 			query = query.where("project_id = ?", @project.id) if @project.present?
-			filters.each do |filter|
-				case filter.first
+			filters.each do |key, value|
+				case key
 				when "project"
-					query = get_clause(query, filter.last, "issues.project_id")
+					query = get_clause(query, value, "issues.project_id")
 				when "issue"
-					query = get_clause(query, filter.last, "issues.id")
+					query = get_clause(query, value, "issues.id")
 				when "status"
-					query = get_clause(query, filter.last, "issues.status_id")
+					query = get_clause(query, value, "issues.status_id")
 				when "version"
-					query = get_clause(query, filter.last, "issues.fixed_version_id")
+					query = get_clause(query, value, "issues.fixed_version_id")
 				when "tracker"
-					query = get_clause(query, filter.last, "issues.tracker_id")
+					query = get_clause(query, value, "issues.tracker_id")
 				when "category"
-					query = get_clause(query, filter.last, "issues.category_id")
+					query = get_clause(query, value, "issues.category_id")
 				when "user"
-					query = get_clause(query, filter.last, "issues.assigned_to_id")
+					query = get_clause(query, value, "issues.assigned_to_id")
 				when "cf"
-					if filter.last.present? && customField
-						query = query.joins(:custom_values).where({ "custom_values.customized_type": "Issue", "custom_values.custom_field_id": customField.id, "custom_values.value": filter.last })
+					if value.last.present? && customField
+						query = query.joins(:custom_values).where({ "custom_values.customized_type": "Issue", "custom_values.custom_field_id": customField.id, "custom_values.value": value })
 					else
 						query = query.joins("LEFT JOIN (
 							SELECT customized_id AS id FROM custom_values
