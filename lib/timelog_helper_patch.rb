@@ -27,8 +27,9 @@ module TimelogHelper
 	end
 
 	def estimated_hours(filters, criteria)
-		if ["project", "issue", "category", "status", "version", "tracker", "user", "cf"].include?(criteria)
-			query = Issue.reorder(nil).all
+		customFieldType = criteria.include?("cf_") ? CustomField.find(criteria.split('_').last).type : ""
+		if ["project", "issue", "category", "status", "version", "tracker", "user"].include?(criteria) || customFieldType == "IssueCustomField"
+			query = Issue.reorder(nil)
 			query = query.where("project_id = ?", @project.id) if @project.present?
 			filters.each do |filter|
 				case filter.first
@@ -72,7 +73,7 @@ module TimelogHelper
     Redmine::Export::CSV.generate do |csv|
       # Column headers
       @showEstimate = session[:timelog][:spent_type] == "T" ? true : false
-      headers = report.criteria.collect {|criteria| l(report.available_criteria[criteria][:label]) }
+      headers = report.criteria.collect {|criteria| l_or_humanize(report.available_criteria[criteria][:label]) }
       headers += report.periods
       headers << l(:label_total_time)
       headers << l(:field_total_estimated_hours) if @showEstimate
@@ -112,7 +113,7 @@ module TimelogHelper
         row << (sum > 0 ? sum : '')
       end
 			row << total			
-			estimatedHours = estimated_hours(filters, criteriaLevel)
+			estimatedHours = estimated_hours(filters, criteria[level])
 			@estimatedTotal ||= 0
 			@estimatedTotal += estimatedHours if level == 0
 			row << estimatedHours if @showEstimate
