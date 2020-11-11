@@ -48,9 +48,13 @@ module TimelogHelper
 					query = get_clause(query, filter.last, "issues.assigned_to_id")
 				when "cf"
 					if filter.last.present?
-						query = query.joins(:custom_values).where({ "custom_values.customized_type": "Issue", "custom_values.custom_field_id": filter.last })
+						query = query.joins(:custom_values).where({ "custom_values.customized_type": "Issue", "custom_values.custom_field_id": filter.last }).where.not("custom_values.value": "" )
 					else
-						query = query.joins("LEFT JOIN custom_values ON custom_values.customized_id = issues.id AND custom_values.customized_type = 'Issue'").where({ "custom_values.custom_field_id": nil })
+						query = query.joins("LEFT JOIN (
+							SELECT customized_id AS id FROM custom_values
+							WHERE customized_type = 'Issue' AND (value != '')
+							GROUP BY customized_id
+							) AS CV ON CV.id = issues.id").where("CV.id IS NULL")
 					end
 				end
 			end
@@ -94,8 +98,9 @@ module TimelogHelper
     hours.collect {|h| h[criteria[level]].to_s}.uniq.each do |value|
 			hours_for_value = select_hours(hours, criteria[level], value)
 			filters.each{|key, value| filters.except!(value) if level < key.to_i}
-			filters[criteria[level]] = value
-			filters[level] = criteria[level]
+			criteriaLevel = criteria[level].include?("cf_") ? "cf" : criteria[level]
+			filters[level] = criteriaLevel
+			filters[criteriaLevel] = criteria[level].include?("cf_") ? (value.present? ? criteria[level].split('_').last : '' ) : value
       next if hours_for_value.empty?
       row = [''] * level
       row << format_criteria_value(available_criteria[criteria[level]], value).to_s
@@ -107,7 +112,7 @@ module TimelogHelper
         row << (sum > 0 ? sum : '')
       end
 			row << total			
-			estimatedHours = estimated_hours(filters, criteria[level])
+			estimatedHours = estimated_hours(filters, criteriaLevel)
 			@estimatedTotal ||= 0
 			@estimatedTotal += estimatedHours if level == 0
 			row << estimatedHours if @showEstimate
