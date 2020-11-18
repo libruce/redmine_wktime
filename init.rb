@@ -409,12 +409,12 @@ module FttePatch
 				def custom_condition
 					if (getSupervisorCondStr || "").include?("time_entries")
 						condstr = " projects.id = issues.project_id AND time_entries.id IS NULL"
-						if filters.present? && filters["project_id"].present?
-							if filters["project_id"][:values].first == 'mine'
-								filters["project_id"][:values] = User.current.memberships.map(&:project_id).map(&:to_s)
-							end
-						condstr += " AND " + sql_for_field("project_id", filters["project_id"][:operator], filters["project_id"][:values], "issues", "project_id")
+						projFilter = filters && filters["project_id"]
+						if filters.present? && projFilter.present?
+							projFilter[:values] = User.current.memberships.map(&:project_id).map(&:to_s) if projFilter[:values] && projFilter[:values].first == 'mine'
+							condstr += " AND " + sql_for_field("project_id", projFilter[:operator], projFilter[:values], "issues", "project_id")
 						end
+						condstr += " AND issues.project_id = #{project.id} " if project.present?
 						getSupervisorCondStr.insert(getSupervisorCondStr.index("time_entries"), condstr + " ) OR ( ")
 					else
 						getSupervisorCondStr
@@ -431,20 +431,6 @@ module FttePatch
 							order(order_option).
 							joins(joins_for_order_statement(order_option.join(',')))
 					end
-				end
-
-				def build_from_params(params)
-					super
-					if params[:from].present? && params[:to].present?
-						add_filter('spent_on', '><', [params[:from], params[:to]])
-					elsif params[:from].present?
-						add_filter('spent_on', '>=', [params[:from]])
-					elsif params[:to].present?
-						add_filter('spent_on', '<=', [params[:to]])
-					else
-						self.filters.each{|k,v| self.filters.except!(k) if "*" == v[:operator] }
-					end
-					self
 				end
 		
 				#========= Patch method to get supervision condition string ======
