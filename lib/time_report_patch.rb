@@ -4,9 +4,10 @@ module Redmine::Helpers
 	class TimeReport
     attr_reader :criteria, :columns, :hours, :total_hours, :periods
 
-    def initialize(project, issue, criteria, columns, time_entry_scope)
+    def initialize(project, issue, criteria, columns, time_entry_scope, options)
       @project = project
       @issue = issue
+      @options = options
 
       @scope = time_entry_scope
       @criteria = criteria || []
@@ -57,7 +58,7 @@ module Redmine::Helpers
           @hours << h
           end
         else
-          @scope.includes(:activity).
+          @scope.
               reorder(nil).
               group(@criteria.collect{|criteria| @available_criteria[criteria][:sql]} + time_columns).
               joins(@criteria.collect{|criteria| @available_criteria[criteria][:joins]}.compact).
@@ -84,10 +85,10 @@ module Redmine::Helpers
           end
         end
         
-        min = @hours.collect {|row| row['spent_on']}.min
+        min = @hours.collect {|row| row['spent_on'] || User.current.today}.min
         @from = min ? min.to_date : User.current.today
 
-        max = @hours.collect {|row| row['spent_on']}.max
+        max = @hours.collect {|row| row['spent_on'] || User.current.today}.max
         @to = max ? max.to_date : User.current.today
         
         @total_hours = @hours.inject(0) {|s,k| s = s + k['hours'].to_f}
@@ -125,7 +126,7 @@ module Redmine::Helpers
         model =  TimeEntry
       end
   
-      @available_criteria = { 'project' => {:sql => "#{model.table_name}.project_id",
+      @available_criteria = { 'project' => {:sql => @options[:nonSpentTime].present? ? "coalesce(time_entries.project_id, issues.project_id)" : "#{model.table_name}.project_id",
                                             :klass => Project,
                                             :label => :label_project},
                                 'status' => {:sql => "#{Issue.table_name}.status_id",
@@ -137,7 +138,7 @@ module Redmine::Helpers
                                 'category' => {:sql => "#{Issue.table_name}.category_id",
                                               :klass => IssueCategory,
                                               :label => :field_category},
-                                'user' => {:sql => "#{model.table_name}.user_id",
+                                'user' => {:sql => @options[:nonSpentTime].present? ? "coalesce(time_entries.user_id, issues.assigned_to_id)" : "#{model.table_name}.user_id",
                                             :klass => User,
                                             :label => :label_user},
                                 'tracker' => {:sql => "#{Issue.table_name}.tracker_id",
@@ -146,7 +147,7 @@ module Redmine::Helpers
                                 'activity' => {:sql => "#{model.table_name}.activity_id",
                                               :klass => TimeEntryActivity,
                                               :label => :label_activity},
-                                'issue' => {:sql => "#{model.table_name}.issue_id",
+                                'issue' => {:sql => @options[:nonSpentTime].present? ? "coalesce(time_entries.issue_id, issues.id)" :  "#{model.table_name}.issue_id",
                                             :klass => Issue,
                                             :label => :label_issue}
                               }

@@ -45,9 +45,10 @@ module TimelogControllerPatch
 		end
 		
 		def report
-			retrieve_time_entry_query
-			scope = time_entry_scope
 			set_filter_session
+			retrieve_time_entry_query
+			options = session[:timelog][:spent_type] == "T" ? {nonSpentTime: params[:non_spent_time]} : {}
+			scope = time_entry_scope(options)
 			if session[:timelog][:spent_type] === "A" || session[:timelog][:spent_type] === "M"
 				productType = params[:spent_type] === "M" ? 'I' : 'A'
 				scope = scope.where("wk_inventory_items.product_type = '#{productType}' ")
@@ -56,7 +57,7 @@ module TimelogControllerPatch
 			unless hookQuery[0].blank?
 				scope = scope.where(hookQuery[0])
 			end
-			@report = Redmine::Helpers::TimeReport.new(@project, @issue, params[:criteria], params[:columns], scope)
+			@report = Redmine::Helpers::TimeReport.new(@project, @issue, params[:criteria], params[:columns], scope, options)
 
 			respond_to do |format|
 			  format.html { render :layout => !request.xhr? }

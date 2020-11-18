@@ -25,6 +25,11 @@
                                                           :style => 'width: 200px',
                                                           :disabled => (@report.criteria.length >= 3),
                                                           :id => "criterias") %>
+
+  <% if params[:spent_type].blank? || params[:spent_type] == "T" %>
+    <label><%= check_box_tag('non_spent_time', true, params[:non_spent_time], onclick: 'this.form.submit();') %><%= "Include Non Spent time Issues" %>
+  <% end %>
+
      <%= link_to l(:button_clear), {:params => request.query_parameters.merge(:criteria => nil)}, :class => 'icon icon-reload' %></p>
 
 <% end %>
