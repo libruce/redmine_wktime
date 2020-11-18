@@ -408,7 +408,14 @@ module FttePatch
 
 				def custom_condition
 					if (getSupervisorCondStr || "").include?("time_entries")
-						getSupervisorCondStr.insert(getSupervisorCondStr.index("time_entries"), "projects.id = issues.project_id AND time_entries.id IS NULL ) OR ( ")
+						condstr = " projects.id = issues.project_id AND time_entries.id IS NULL"
+						if filters.present? && filters["project_id"].present?
+							if filters["project_id"][:values].first == 'mine'
+								filters["project_id"][:values] = User.current.memberships.map(&:project_id).map(&:to_s)
+							end
+						condstr += " AND " + sql_for_field("project_id", filters["project_id"][:operator], filters["project_id"][:values], "issues", "project_id")
+						end
+						getSupervisorCondStr.insert(getSupervisorCondStr.index("time_entries"), condstr + " ) OR ( ")
 					else
 						getSupervisorCondStr
 					end
