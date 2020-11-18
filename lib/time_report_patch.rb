@@ -79,16 +79,16 @@ module Redmine::Helpers
           when 'month'
             row['month'] = "#{row['tyear']}-#{row['tmonth']}"
           when 'week'
-            row['week'] = "#{row['spent_on'].cwyear}-#{row['tweek']}"
+            row['week'] = "#{row['spent_on'].cwyear}-#{row['tweek']}" if row['spent_on'].present?
           when 'day'
             row['day'] = "#{row['spent_on']}"
           end
         end
         
-        min = @hours.collect {|row| row['spent_on'] || User.current.today}.min
+        min = @hours.collect {|row| row['spent_on'] }.compact.min
         @from = min ? min.to_date : User.current.today
 
-        max = @hours.collect {|row| row['spent_on'] || User.current.today}.max
+        max = @hours.collect {|row| row['spent_on'] }.compact.max
         @to = max ? max.to_date : User.current.today
         
         @total_hours = @hours.inject(0) {|s,k| s = s + k['hours'].to_f}
