@@ -30,7 +30,7 @@
     <label><%= check_box_tag('non_spent_time', true, params[:non_spent_time], onclick: 'this.form.submit();') %><%= "Include Non Spent time Issues" %>
   <% end %>
 
-     <%= link_to l(:button_clear), {:params => request.query_parameters.merge(:criteria => nil)}, :class => 'icon icon-reload' %></p>
+     <%= link_to l(:button_clear), {:params => request.query_parameters.merge(:criteria => nil, :non_spent_time => nil)}, :class => 'icon icon-reload' %></p>
 
 <% end %>
 
