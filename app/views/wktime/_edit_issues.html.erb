@@ -49,8 +49,8 @@ currencySym = ""
 							:padAt => 'begin', :padTill => i+1}%>
 					<%= render :partial => 'edit_hours', :locals => {:entry => entry, :isTemplate => false, 
 					:padAt => 'begin', :padTill => i+2}%>	
-					<% thours[i] += entry.hours unless @prev_template%>
-					<% @total_hours += entry.hours unless @prev_template%>
+					<% thours[i] += (entry.hours || 0) unless @prev_template%>
+					<% @total_hours += (entry.hours || 0) unless @prev_template%>
 					<% currencySym = controller.getUnit(entry) %>
 				<% end %>
 			<% end %>
