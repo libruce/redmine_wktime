@@ -298,9 +298,11 @@ include QueriesHelper
 			else
 				ids = params['ids']
 			end
-			
-			limited_logs = ids.find{|id| TimeEntry.find(id)&.check_if_can_be_destroyed == false }
-
+			begin
+				limited_logs = ids.find{|id| TimeEntry.find(id)&.check_if_can_be_destroyed == false }
+			rescue
+				limited_logs = nil
+			end
 			if limited_logs.nil?
 				delete(ids)
 			end
@@ -359,8 +361,11 @@ include QueriesHelper
 			deletable = @wktime.nil? || @wktime.status == 'n' || @wktime.status == 'r'
 			if deletable
 				@entries = findEntries()
-
-				limited_logs = @entries.find{|entry| entry.check_if_can_be_destroyed == false }
+				begin
+				 	limited_logs = @entries.find{|entry| entry.check_if_can_be_destroyed == false }
+				rescue
+					limited_logs = nil
+				end
 				if limited_logs.nil?
 					@entries.each do |entry|
 						entry.destroy()
