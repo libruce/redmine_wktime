@@ -298,9 +298,20 @@ include QueriesHelper
 			else
 				ids = params['ids']
 			end
-			delete(ids)
+			result = []
+			ids.each do |id|
+				entry = TimeEntry.find(id)
+				result << entry.check_if_can_be_destroyed
+			end
+			if !result.include? false
+				delete(ids)
+			end
 			respond_to do |format|
 				format.text  { 
+					if result.include? false
+						render :text => 'FAILED'
+						return
+					end 
 					render :text => 'OK' 
 				}
 				format.api {
@@ -338,6 +349,7 @@ include QueriesHelper
 
 	def destroy
 		setup
+		result = []
 		#cond = getCondition('spent_on', @user.id, @startday, @startday+6)
 		#TimeEntry.delete_all(cond)
 		hookPerm = call_hook(:controller_check_locked, {:startdate => @startday})
@@ -351,13 +363,23 @@ include QueriesHelper
 			if deletable
 				@entries = findEntries()
 				@entries.each do |entry|
-					entry.destroy()
+					result << entry.check_if_can_be_destroyed
 				end
-				cond = getCondition('begin_date', @user.id, @startday)
-				deleteWkEntity(cond)
+				if !result.include? false
+					@entries.each do |entry|
+						entry.destroy()
+					end
+					cond = getCondition('begin_date', @user.id, @startday)
+					deleteWkEntity(cond)
+				end
 			end
 			respond_to do |format|
-				format.html {				
+				format.html {
+					if result.include? false
+						flash[:error] = l(:notice_unable_delete_time_entry)
+						redirect_back_or_default :action => 'index', :tab => params[:tab]
+						return
+					end				
 					flash[:notice] = l(:notice_successful_delete)
 					redirect_back_or_default :action => 'index', :tab => params[:tab]
 				} 
