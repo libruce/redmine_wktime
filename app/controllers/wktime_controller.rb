@@ -298,17 +298,15 @@ include QueriesHelper
 			else
 				ids = params['ids']
 			end
-			result = []
-			ids.each do |id|
-				entry = TimeEntry.find(id)
-				result << entry.check_if_can_be_destroyed
-			end
-			if !result.include? false
+			
+			limited_logs = ids.find{|id| TimeEntry.find(id)&.check_if_can_be_destroyed == false }
+
+			if limited_logs.nil?
 				delete(ids)
 			end
 			respond_to do |format|
 				format.text  { 
-					if result.include? false
+					if !limited_logs.nil?
 						render :text => 'FAILED'
 						return
 					end 
@@ -349,7 +347,6 @@ include QueriesHelper
 
 	def destroy
 		setup
-		result = []
 		#cond = getCondition('spent_on', @user.id, @startday, @startday+6)
 		#TimeEntry.delete_all(cond)
 		hookPerm = call_hook(:controller_check_locked, {:startdate => @startday})
@@ -362,10 +359,9 @@ include QueriesHelper
 			deletable = @wktime.nil? || @wktime.status == 'n' || @wktime.status == 'r'
 			if deletable
 				@entries = findEntries()
-				@entries.each do |entry|
-					result << entry.check_if_can_be_destroyed
-				end
-				if !result.include? false
+
+				limited_logs = @entries.find{|entry| entry.check_if_can_be_destroyed == false }
+				if limited_logs.nil?
 					@entries.each do |entry|
 						entry.destroy()
 					end
@@ -375,7 +371,7 @@ include QueriesHelper
 			end
 			respond_to do |format|
 				format.html {
-					if result.include? false
+					if !limited_logs.nil?
 						flash[:error] = l(:notice_unable_delete_time_entry)
 						redirect_back_or_default :action => 'index', :tab => params[:tab]
 						return
