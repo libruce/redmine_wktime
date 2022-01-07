@@ -299,7 +299,12 @@ include QueriesHelper
 				ids = params['ids']
 			end
 			begin
-				limited_logs = ids.find{|id| TimeEntry.find(id)&.check_if_can_be_destroyed == false }
+				limited_logs = ids.find{|id| 
+				et = TimeEntry.find(id: id).first()
+				if !et.nil?
+					et.check_if_can_be_destroyed == false 
+				end
+			}
 			rescue
 				limited_logs = nil
 			end
